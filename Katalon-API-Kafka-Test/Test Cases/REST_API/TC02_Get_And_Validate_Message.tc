@@ -1,8 +1,34 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<TestCaseEntity>
-  <description>REST API consumer: retrieve a message and validate its fields.</description>
-  <name>TC02_Get_And_Validate_Message</name>
-  <tag></tag>
-  <comment></comment>
-  <testCaseGuid></testCaseGuid>
-</TestCaseEntity>
+
+import groovy.json.JsonSlurper
+
+String url = 'http://127.0.0.1:5000/messages/msg-1001'
+
+def connection = new URL(url).openConnection()
+connection.setRequestMethod('GET')
+connection.setConnectTimeout(5000)
+connection.setReadTimeout(5000)
+connection.setRequestProperty('Accept', 'application/json')
+
+int statusCode = connection.responseCode
+def responseStream = statusCode >= 400 ?
+    connection.errorStream : connection.inputStream
+
+String responseText = responseStream.getText('UTF-8')
+
+assert statusCode == 200 :
+    "Expected HTTP 200, got ${statusCode}. Body: ${responseText}"
+
+def response = new JsonSlurper().parseText(responseText)
+
+assert response.id == 'msg-1001' :
+    "Unexpected message ID: ${response.id}"
+
+assert response.text == 'Hello from Katalon' :
+    "Unexpected message text: ${response.text}"
+
+assert response.status == 'queued' :
+    "Unexpected message status: ${response.status}"
+
+println "PASS: Retrieved and validated message ${response.id}"
+
+connection.disconnect()
