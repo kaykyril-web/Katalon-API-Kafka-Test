@@ -1,0 +1,9 @@
+.settings/
+.metadata/
+bin/
+Reports/
+Screenshots/
+*.log
+.env
+.DS_Store
+Drivers/*.jar

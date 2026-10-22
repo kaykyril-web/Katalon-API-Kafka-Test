@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TestCaseEntity>
+  <description>REST API producer: create a message and validate the response.</description>
+  <name>TC01_Create_Message</name>
+  <tag></tag>
+  <comment></comment>
+  <testCaseGuid></testCaseGuid>
+  <variable>
+    <defaultValue>'http://127.0.0.1:5000'</defaultValue>
+    <description>Local REST API base URL</description>
+    <id>baseUrl</id>
+    <name>baseUrl</name>
+    <required>true</required>
+    <type>STRING</type>
+  </variable>
+</TestCaseEntity>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TestCaseEntity>
+  <description>Kafka consumer: consume a JSON event and validate required fields.</description>
+  <name>TC03_Consume_And_Validate_Message</name>
+  <tag></tag>
+  <comment></comment>
+  <testCaseGuid></testCaseGuid>
+  <variable>
+    <defaultValue>'localhost:9092'</defaultValue>
+    <description>Kafka bootstrap servers</description>
+    <id>kafkaBootstrapServers</id>
+    <name>kafkaBootstrapServers</name>
+    <required>true</required>
+    <type>STRING</type>
+  </variable>
+</TestCaseEntity>

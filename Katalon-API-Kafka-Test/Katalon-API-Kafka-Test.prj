@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Project>
+  <name>Katalon-API-Kafka-Test</name>
+  <description>REST API producer-consumer and Kafka consumer technical test starter</description>
+</Project>
