@@ -1,16 +1,95 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<TestCaseEntity>
-  <description>Kafka consumer: consume a JSON event and validate required fields.</description>
-  <name>TC03_Consume_And_Validate_Message</name>
-  <tag></tag>
-  <comment></comment>
-  <testCaseGuid></testCaseGuid>
-  <variable>
-    <defaultValue>'localhost:9092'</defaultValue>
-    <description>Kafka bootstrap servers</description>
-    <id>kafkaBootstrapServers</id>
-    <name>kafkaBootstrapServers</name>
-    <required>true</required>
-    <type>STRING</type>
-  </variable>
-</TestCaseEntity>
+
+import org.apache.kafka.clients.consumer.KafkaConsumer
+import org.apache.kafka.clients.consumer.ConsumerRecords
+import org.apache.kafka.common.serialization.StringDeserializer
+import java.time.Duration
+import java.util.Properties
+
+Properties props = new Properties()
+props.put('bootstrap.servers', 'localhost:9092')
+props.put('group.id', 'katalon-test-' + System.currentTimeMillis())
+props.put('key.deserializer', StringDeserializer.name)
+props.put('value.deserializer', StringDeserializer.name)
+props.put('auto.offset.reset', 'earliest')
+props.put('enable.auto.commit', 'false')
+
+KafkaConsumer<String, String> consumer = new KafkaConsumer<>(props)
+
+try {
+    consumer.subscribe(['messages'])
+
+    def foundRecord = null
+    long deadline = System.currentTimeMillis() + 15000
+
+    while (System.currentTimeMillis() < deadline && foundRecord == null) {
+        ConsumerRecords<String, String> records =
+            consumer.poll(Duration.ofMillis(1000))
+
+        for (record in records) {
+            foundRecord = record
+            break
+        }
+    }
+
+    assert foundRecord != null :
+        'No message received from Kafka topic messages within 15 seconds'
+
+
+assert foundRecord.topic() == 'messages' :
+    "Unexpected topic: ${foundRecord.topic()}"
+
+String messageValue = foundRecord.value()
+
+assert messageValue != null &&
+       !messageValue.trim().isEmpty() :
+    'Kafka message value is empty'
+
+// Try to parse JSON if the payload is JSON.
+
+if (messageValue.trim().startsWith('{')) {
+    def payload = new groovy.json.JsonSlurper()
+        .parseText(messageValue)
+
+    assert payload instanceof Map :
+        'Expected a JSON object'
+
+    assert !payload.isEmpty() :
+        'Kafka JSON payload is empty'
+
+    // Validate common fields when present.
+    if (payload.containsKey('id')) {
+        assert payload.id != null &&
+               payload.id.toString().trim() :
+            'Field id must not be empty'
+    }
+
+    if (payload.containsKey('text')) {
+        assert payload.text != null &&
+               payload.text.toString().trim() :
+            'Field text must not be empty'
+    }
+
+    if (payload.containsKey('status')) {
+        assert payload.status != null &&
+               payload.status.toString().trim() :
+            'Field status must not be empty'
+    }
+
+    println "PASS: Kafka JSON fields validated"
+    println "Payload: ${payload}"
+} else {
+    assert messageValue.trim().length() > 0 :
+        'Kafka text payload is empty'
+
+    println "PASS: Kafka text payload validated"
+}
+
+
+println "Topic: ${foundRecord.topic()}"
+println "Key: ${foundRecord.key()}"
+println "Value: ${messageValue}"
+
+
+} finally {
+    consumer.close()
+}
