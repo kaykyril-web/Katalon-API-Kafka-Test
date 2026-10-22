@@ -1,16 +1,48 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<TestCaseEntity>
-  <description>REST API producer: create a message and validate the response.</description>
-  <name>TC01_Create_Message</name>
-  <tag></tag>
-  <comment></comment>
-  <testCaseGuid></testCaseGuid>
-  <variable>
-    <defaultValue>'http://127.0.0.1:5000'</defaultValue>
-    <description>Local REST API base URL</description>
-    <id>baseUrl</id>
-    <name>baseUrl</name>
-    <required>true</required>
-    <type>STRING</type>
-  </variable>
-</TestCaseEntity>
+
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
+
+String baseUrl = 'http://127.0.0.1:5000'
+String messageId = 'msg-1001'
+
+String body = JsonOutput.toJson([
+    id: messageId,
+    text: 'Hello from Katalon',
+    status: 'queued'
+])
+
+def connection = new URL("${baseUrl}/messages").openConnection()
+connection.setRequestMethod('POST')
+connection.setConnectTimeout(5000)
+connection.setReadTimeout(5000)
+connection.setDoOutput(true)
+connection.setRequestProperty('Content-Type', 'application/json')
+connection.setRequestProperty('Accept', 'application/json')
+
+connection.outputStream.withWriter('UTF-8') {
+    it << body
+}
+
+int statusCode = connection.responseCode
+def responseStream = statusCode >= 400 ?
+    connection.errorStream : connection.inputStream
+
+String responseText = responseStream.getText('UTF-8')
+
+assert statusCode == 201 :
+    "Expected HTTP 201, got ${statusCode}. Body: ${responseText}"
+
+def response = new JsonSlurper().parseText(responseText)
+
+assert response.id == messageId :
+    "Unexpected message ID: ${response.id}"
+
+assert response.text == 'Hello from Katalon' :
+    "Unexpected message text: ${response.text}"
+
+assert response.status == 'queued' :
+    "Unexpected message status: ${response.status}"
+
+println "PASS: REST producer created message ${response.id}"
+
+connection.disconnect()
